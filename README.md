@@ -1,6 +1,6 @@
 # BP-RBF-SVM-demo
 
-复旦大学研究生课程经网络及应用2024202501INFO630016.01的课程PJ。
+复旦大学研究生课程经网络及应用INFO630016.01的课程PJ。
 
 ## 作业要求
 
@@ -14,7 +14,7 @@ y=&\frac{1+cosx}{2},(0 \le x \le 6\pi)\\
 z=&\frac{1}{\sqrt{x^2+y^2}},(-20 \le x \le 20,-20 \le y \le 20)
 \end{aligned}
 $$
-二、分别用BP、RBF、SVM对下列函数分类$(i=1,2,...,400)$
+二、分别用RBF、SVM对下列函数分类$(i=1,2,...,400)$
 $$
 C_a=\left\{
 	\begin{aligned}
