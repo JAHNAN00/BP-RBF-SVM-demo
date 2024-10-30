@@ -4,6 +4,8 @@
 
 ## 作业要求
 
+> 疑似github无法正常显示latex公式。
+
 一、分别用BP、RBF、SVM拟合以下函数并进行分析比较：
 $$
 \begin{aligned}
