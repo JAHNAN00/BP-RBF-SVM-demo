@@ -34,6 +34,6 @@ C_B = \begin{cases}
 \end{cases}
 $$
 
-其中，$`\alpha·random`$为高斯白噪声,$`SNR=20dB`$。
+其中， $\alpha·random$为高斯白噪声, $SNR=20dB$。
 
 
