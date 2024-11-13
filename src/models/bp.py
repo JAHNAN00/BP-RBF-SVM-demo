@@ -1,55 +1,173 @@
 import numpy as np
-from utils.activation_functions import sigmoid, sigmoid_derivative
+import matplotlib.pyplot as plt
+
 
 class BP:
-    def __init__(self, input_size, hidden_size, output_size, learning_rate=0.01):
-        # 初始化网络参数
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.output_size = output_size
-        self.learning_rate = learning_rate
 
-        # 随机初始化权重
-        self.weights_input_hidden = np.random.rand(self.input_size, self.hidden_size)
-        self.weights_hidden_output = np.random.rand(self.hidden_size, self.output_size)
+    def __init__(self, layers, activation_function='sigmoid'):
+        """
+        初始化BP神经网络。
+        :param layers: 列表，定义每层神经元数量
+        :param activation_function: 激活函数，默认为sigmoid，支持 'sigmoid', 'relu', 'tanh'
+        """
+        self.layers = layers
+        self.num_layers = len(layers)
+        self.activation_function = activation_function
 
-        # 初始化偏置
-        self.bias_hidden = np.random.rand(self.hidden_size)
-        self.bias_output = np.random.rand(self.output_size)
+        # 初始化权重和偏置
+        self.weights = []
+        self.biases = []
+
+        for i in range(1, self.num_layers):
+            weight = np.random.randn(layers[i],
+                                     layers[i - 1])
+            bias = np.random.randn(layers[i], 1)
+            self.weights.append(weight)
+            self.biases.append(bias)
+
+    def _sigmoid(self, z):
+        return 1 / (1 + np.exp(-z))
+
+    def _sigmoid_derivative(self, z):
+        return self._sigmoid(z) * (1 - self._sigmoid(z))
+
+    def _relu(self, z):
+        return np.maximum(0, z)
+
+    def _relu_derivative(self, z):
+        return (z > 0).astype(float)
+
+    def _tanh(self, z):
+        return np.tanh(z)
+
+    def _tanh_derivative(self, z):
+        return 1 - np.tanh(z)**2
+
+    def _get_activation(self, function_name):
+        """根据函数名称返回对应的激活函数和导数"""
+        if function_name == 'sigmoid':
+            return self._sigmoid, self._sigmoid_derivative
+        elif function_name == 'relu':
+            return self._relu, self._relu_derivative
+        elif function_name == 'tanh':
+            return self._tanh, self._tanh_derivative
+        else:
+            raise ValueError("Unsupported activation function")
 
     def forward(self, X):
-        # 前向传播
-        self.hidden_input = np.dot(X, self.weights_input_hidden) + self.bias_hidden
-        self.hidden_output = sigmoid(self.hidden_input)
+        """
+        前向传播
+        :param X: 输入数据
+        :return: 输出结果
+        """
+        self.a = [X.T]  # 存储每层的激活值
+        self.z = []  # 存储每层的加权输入值
+        activation, _ = self._get_activation(self.activation_function)
 
-        self.final_input = np.dot(self.hidden_output, self.weights_hidden_output) + self.bias_output
-        self.final_output = sigmoid(self.final_input)
-        return self.final_output
+        # for i in range(self.num_layers - 1):
+        #     z = np.dot(self.weights[i], self.a[i]) + self.biases[i]
+        #     self.z.append(z)
+        #     a = activation(z)
+        #     self.a.append(a)
 
-    def backward(self, X, y):
+        for i in range(self.num_layers - 2):
+            z = np.dot(self.weights[i], self.a[i]) + self.biases[i]
+            self.z.append(z)
+            a = activation(z)
+            self.a.append(a)
+
+        # 最后一层不添加激活函数
+        i=self.num_layers-2
+        z = np.dot(self.weights[i], self.a[i]) + self.biases[i]
+        self.z.append(z)
+        self.a.append(z)
+
+        return self.a[-1]
+
+    def backward(self, X, y, learning_rate=0.1):
+        """
+        反向传播
+        :param X: 输入数据
+        :param y: 目标标签
+        :param learning_rate: 学习率
+        """
+        m = X.shape[0]
+
+        # 计算误差
+        delta = self.a[-1] - y.T  # 输出层误差
+        dW = [np.zeros_like(w) for w in self.weights]
+        db = [np.zeros_like(b) for b in self.biases]
+
+        activation, activation_derivative = self._get_activation(
+            self.activation_function)
+
         # 反向传播
-        output_error = y - self.final_output
-        output_delta = output_error * sigmoid_derivative(self.final_output)
-
-        hidden_error = output_delta.dot(self.weights_hidden_output.T)
-        hidden_delta = hidden_error * sigmoid_derivative(self.hidden_output)
+        for l in range(self.num_layers - 2, -1, -1):
+            dA = delta * activation_derivative(self.z[l])
+            dW[l] = np.dot(dA, self.a[l].T) / m
+            db[l] = np.sum(dA, axis=1, keepdims=True) / m
+            delta = np.dot(self.weights[l].T, dA)
 
         # 更新权重和偏置
-        self.weights_hidden_output += self.hidden_output.T.dot(output_delta) * self.learning_rate
-        self.bias_output += np.sum(output_delta, axis=0) * self.learning_rate
+        for i in range(self.num_layers - 1):
+            self.weights[i] -= learning_rate * dW[i]
+            self.biases[i] -= learning_rate * db[i]
 
-        self.weights_input_hidden += X.T.dot(hidden_delta) * self.learning_rate
-        self.bias_hidden += np.sum(hidden_delta, axis=0) * self.learning_rate
-
-    def train(self, X, y, epochs=1000):
+    def train(self, X, y, epochs=1000, learning_rate=0.1):
+        """
+        训练神经网络
+        :param X: 输入数据
+        :param y: 标签
+        :param epochs: 训练轮数
+        :param learning_rate: 学习率
+        """
         for epoch in range(epochs):
-            self.forward(X)
-            self.backward(X, y)
+            self.forward(X)  # 前向传播
+            self.backward(X, y, learning_rate)  # 反向传播
             if epoch % 100 == 0:
-                loss = np.mean(np.square(y - self.final_output))
-                print(f'Epoch {epoch}, Loss: {loss}')
+                loss = np.mean((self.a[-1] - y.T)**2)
+                print(f"Epoch {epoch}, Loss: {loss}")
 
     def predict(self, X):
-        return self.forward(X)
+        """
+        预测输入数据的输出
+        :param X: 输入数据
+        :return: 预测的结果
+        """
+        output = self.forward(X)
+        return output
 
-# 如果需要，可以添加更多功能，例如保存和加载模型等
+
+if __name__ == "__main__":
+    # 简单的数据集
+    # X = np.linspace(-2 * np.pi, 2 * np.pi, 100).reshape(-1, 1)
+    # Y = np.sin(X)
+    X=((np.random.rand(100)-0.5)*2*np.pi).reshape(-1, 1)
+    Y=np.sin(X)
+
+    # 创建BP网络实例，定义层结构，激活函数为relu
+    bp = BP([1, 25, 1], activation_function='sigmoid')
+
+    # 训练网络
+    bp.train(X, Y, epochs=2000, learning_rate=0.3)
+
+    # 测试预测准确度
+    predictions = bp.predict(X)
+    accuracy = np.mean(predictions == Y)
+    # print("Predictions:", predictions.T)
+    # print(f"预测准确度: {accuracy * 100}%")
+    # 绘制拟合结果
+    plt.figure(figsize=(10, 6))
+    plt.scatter(X,Y,label="True Function (sin(x))", color="blue")
+    plt.scatter(X,predictions,label="Predicted Function",color="red",linestyle="--")
+    # plt.plot(X, Y, label="True Function (sin(x))", color="blue")
+    # plt.plot(X,
+    #          predictions.T,
+    #          label="Predicted Function",
+    #          color="red",
+    #          linestyle="--")
+    plt.xlabel("x")
+    plt.ylabel("sin(x)")
+    plt.legend()
+    plt.title("Fitting sin(x) with Backpropagation Neural Network")
+    plt.savefig("sin_function_fitting.png")
