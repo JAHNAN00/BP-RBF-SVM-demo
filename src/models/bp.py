@@ -76,7 +76,7 @@ class BP:
             a = activation(z)
             self.a.append(a)
 
-        # 最后一层不添加激活函数
+        # 对于回归任务，最后一层不添加激活函数
         i=self.num_layers-2
         z = np.dot(self.weights[i], self.a[i]) + self.biases[i]
         self.z.append(z)
