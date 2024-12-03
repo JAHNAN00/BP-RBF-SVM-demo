@@ -18,7 +18,7 @@ $$
 z = \frac{1}{\sqrt{x^2+y^2}}, \quad (-20 \le x \le 20, -20 \le y \le 20)  
 $$
 
-二、分别用 RBF、SVM 对下列函数分类 $(i=1,2,...,400)$:
+二、分别用 BP、RBF、SVM 对下列函数分类 $(i=1,2,...,400)$:
 
 $$
 C_a = \begin{cases}

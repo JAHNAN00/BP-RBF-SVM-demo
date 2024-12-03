@@ -6,7 +6,6 @@ class BP:
 
     def __init__(self, layers, activation_function='sigmoid'):
         """
-        初始化BP神经网络。
         :param layers: 列表，定义每层神经元数量
         :param activation_function: 激活函数，默认为sigmoid，支持 'sigmoid', 'relu', 'tanh'
         """
@@ -14,7 +13,6 @@ class BP:
         self.num_layers = len(layers)
         self.activation_function = activation_function
 
-        # 初始化权重和偏置
         self.weights = []
         self.biases = []
 
@@ -55,20 +53,9 @@ class BP:
             raise ValueError("Unsupported activation function")
 
     def forward(self, X):
-        """
-        前向传播
-        :param X: 输入数据
-        :return: 输出结果
-        """
         self.a = [X.T]  # 存储每层的激活值
         self.z = []  # 存储每层的加权输入值
         activation, _ = self._get_activation(self.activation_function)
-
-        # for i in range(self.num_layers - 1):
-        #     z = np.dot(self.weights[i], self.a[i]) + self.biases[i]
-        #     self.z.append(z)
-        #     a = activation(z)
-        #     self.a.append(a)
 
         for i in range(self.num_layers - 2):
             z = np.dot(self.weights[i], self.a[i]) + self.biases[i]
@@ -85,12 +72,6 @@ class BP:
         return self.a[-1]
 
     def backward(self, X, y, learning_rate=0.1):
-        """
-        反向传播
-        :param X: 输入数据
-        :param y: 目标标签
-        :param learning_rate: 学习率
-        """
         m = X.shape[0]
 
         # 计算误差
@@ -114,13 +95,6 @@ class BP:
             self.biases[i] -= learning_rate * db[i]
 
     def train(self, X, y, epochs=1000, learning_rate=0.1):
-        """
-        训练神经网络
-        :param X: 输入数据
-        :param y: 标签
-        :param epochs: 训练轮数
-        :param learning_rate: 学习率
-        """
         for epoch in range(epochs):
             self.forward(X)  # 前向传播
             self.backward(X, y, learning_rate)  # 反向传播
@@ -129,11 +103,6 @@ class BP:
                 print(f"Epoch {epoch}, Loss: {loss}")
 
     def predict(self, X):
-        """
-        预测输入数据的输出
-        :param X: 输入数据
-        :return: 预测的结果
-        """
         output = self.forward(X)
         return output
 
@@ -145,29 +114,17 @@ if __name__ == "__main__":
     X=((np.random.rand(100)-0.5)*2*np.pi).reshape(-1, 1)
     Y=np.sin(X)
 
-    # 创建BP网络实例，定义层结构，激活函数为relu
     bp = BP([1, 25, 1], activation_function='sigmoid')
 
-    # 训练网络
     bp.train(X, Y, epochs=2000, learning_rate=0.3)
 
-    # 测试预测准确度
     predictions = bp.predict(X)
     accuracy = np.mean(predictions == Y)
-    # print("Predictions:", predictions.T)
-    # print(f"预测准确度: {accuracy * 100}%")
-    # 绘制拟合结果
     plt.figure(figsize=(10, 6))
     plt.scatter(X,Y,label="True Function (sin(x))", color="blue")
     plt.scatter(X,predictions,label="Predicted Function",color="red",linestyle="--")
-    # plt.plot(X, Y, label="True Function (sin(x))", color="blue")
-    # plt.plot(X,
-    #          predictions.T,
-    #          label="Predicted Function",
-    #          color="red",
-    #          linestyle="--")
     plt.xlabel("x")
     plt.ylabel("sin(x)")
     plt.legend()
     plt.title("Fitting sin(x) with Backpropagation Neural Network")
-    plt.savefig("sin_function_fitting.png")
+    plt.savefig("bp.png")
